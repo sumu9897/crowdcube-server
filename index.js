@@ -5,13 +5,11 @@ require('dotenv').config();
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const port = process.env.PORT || 3530;
 
-//middleware
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-
-
-// const uri = "mongodb+srv://<db_username>:<db_password>@cluster0.gffyd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+// MongoDB URI
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gffyd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -20,30 +18,50 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
+// Main function to connect to MongoDB and set up routes
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
+    // Connect the client to the server
     await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
+
+    // Define the campaign collection
+    const campaignCollection = client.db('crowdcubedb').collection('campaign');
+
+    // Route to handle adding a new campaign
+    app.post('/campaign', async (req, res) => {
+      const newCampaign = req.body;
+      console.log('Adding New Campaign', newCampaign);
+      const result = await campaignCollection.insertOne(newCampaign);
+      res.send(result);
+    });
+
+    // Route to confirm the server is running
+    app.get('/', (req, res) => {
+      res.send('Hello Boss, I am running');
+    });
+
+    // Confirm successful connection to MongoDB
+    await client.db('admin').command({ ping: 1 });
+    console.log('Pinged your deployment. You successfully connected to MongoDB!');
+  } catch (error) {
+    console.error('Error in MongoDB connection or setup:', error);
   }
 }
+
+// Run the application
 run().catch(console.dir);
 
-
-
-app.get('/', (req, res) =>{
-    res.send('Hello Boss I am running')
+// Start the Express server
+app.listen(port, () => {
+  console.log(`Server is running on port: ${port}`);
 });
 
-app.listen(port, () =>{
-    console.log(`Server is running on port: ${port}`);
-    
-})
+// Graceful shutdown handling
+process.on('SIGINT', async () => {
+  console.log('Shutting down server...');
+  await client.close();
+  process.exit(0);
+});
