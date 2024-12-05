@@ -29,6 +29,7 @@ async function run() {
 
     // Define the campaign collection
     const campaignCollection = client.db('crowdcubedb').collection('campaign');
+    const userCollection = client.db('crowdcubedb').collection('users');
 
     app.get('/campaign', async (req, res) => {
         const cursor = campaignCollection.find();
@@ -44,6 +45,21 @@ async function run() {
           res.status(500).send({ error: "Failed to fetch campaigns" });
         }
       });
+
+      app.get('/campaign/:id', async (req, res) => {
+        try {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await campaignCollection.findOne(query);
+            if (!result) {
+                return res.status(404).send({ message: "Campaign not found" });
+            }
+            res.send(result);
+        } catch (error) {
+            res.status(500).send({ error: "Failed to fetch campaign details" });
+        }
+    });
+    
       
 
     // Route to handle adding a new campaign
@@ -60,6 +76,16 @@ async function run() {
         const result = await campaignCollection.deleteOne(query);
         res.send(result);
     })
+
+    // Users Related Api
+    app.post('/users', async(req,res)=>{
+        const newUser = req.body;
+        console.log('create new user', newUser);
+        const result = await userCollection.insertOne(newUser);
+        res.send(result);
+    })
+
+
 
     // Route to confirm the server is running
     app.get('/', (req, res) => {
