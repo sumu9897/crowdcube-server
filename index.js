@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 3530;
 
 // Middleware
@@ -30,6 +30,22 @@ async function run() {
     // Define the campaign collection
     const campaignCollection = client.db('crowdcubedb').collection('campaign');
 
+    app.get('/campaign', async (req, res) => {
+        const cursor = campaignCollection.find();
+        const result = await cursor.toArray();
+        res.send(result);
+    })
+
+    app.get("/campaigns", async (req, res) => {
+        try {
+          const campaigns = await campaignCollection.find().toArray();
+          res.send(campaigns);
+        } catch (error) {
+          res.status(500).send({ error: "Failed to fetch campaigns" });
+        }
+      });
+      
+
     // Route to handle adding a new campaign
     app.post('/campaign', async (req, res) => {
       const newCampaign = req.body;
@@ -37,6 +53,13 @@ async function run() {
       const result = await campaignCollection.insertOne(newCampaign);
       res.send(result);
     });
+
+    app.delete('/campaign/:id', async (req, res) =>{
+        const id = req.params.id;
+        const query ={_id: new ObjectId(id)}
+        const result = await campaignCollection.deleteOne(query);
+        res.send(result);
+    })
 
     // Route to confirm the server is running
     app.get('/', (req, res) => {
