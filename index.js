@@ -33,16 +33,33 @@ async function run() {
 
     // ----------- Campaign Endpoints -----------
     // Get all campaigns or filter by userEmail
-    app.get("/campaign", async (req, res) => {
-      const email = req.query.userEmail;
-      try {
-        const query = email ? { userEmail: email } : {};
-        const campaigns = await campaignCollection.find(query).toArray();
-        res.send(campaigns);
-      } catch (error) {
-        res.status(500).send({ error: "Failed to fetch campaigns" });
-      }
-    });
+        app.get('/campaign', async (req, res) => {
+            const email = req.query.userEmail;
+            
+            try {
+            const query = email ? { userEmail: email } : {};
+            const campaigns = await campaignCollection.find(query).toArray();
+        
+            // For each campaign, calculate the total donation amount
+            const campaignWithTotalDonations = await Promise.all(
+                campaigns.map(async (campaign) => {
+                const donations = await donationCollection.find({ campaignId: campaign._id }).toArray();
+                const totalDonations = donations.reduce((total, donation) => total + donation.amount, 0);
+        
+                return {
+                    ...campaign,
+                    totalDonations
+                };
+                })
+            );
+        
+            res.send(campaignWithTotalDonations);
+            
+            } catch (error) {
+            res.status(500).send({ error: 'Failed to fetch campaigns' });
+            }
+        });
+  
 
     // Get campaign by ID
     app.get("/campaign/:id", async (req, res) => {
