@@ -78,6 +78,11 @@ async function run() {
     })
 
     // Users Related Api
+    app.get('/users', async(req, res) =>{
+        const cursor = userCollection.find();
+        const result = await cursor.toArray();
+        res.send(result);
+    })
     app.post('/users', async(req,res)=>{
         const newUser = req.body;
         console.log('create new user', newUser);
