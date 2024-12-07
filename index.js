@@ -86,24 +86,38 @@ async function run() {
 
     // Update campaign
     app.put("/campaign/:id", async (req, res) => {
-      try {
+        const { id } = req.params;
         const updatedData = req.body;
+      
+        console.log("Received Update Request for ID:", id);
+        console.log("Data to Update:", updatedData);
 
-        // Ensure `deadline` is stored as a Date object if needed
+        delete updatedData._id;
+      
+        // Ensure `deadline` is properly formatted as a Date object
         if (updatedData.deadline) {
           updatedData.deadline = new Date(updatedData.deadline);
         }
-
-        const result = await campaignCollection.updateOne(
-          { _id: new ObjectId(req.params.id) },
-          { $set: updatedData }
-        );
-
-        res.send(result);
-      } catch (error) {
-        res.status(500).send({ error: "Failed to update campaign" });
-      }
-    });
+      
+        try {
+          const result = await campaignCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: updatedData }
+          );
+      
+          console.log("Update Operation Result:", result);
+      
+          if (result.matchedCount === 0) {
+            return res.status(404).send({ error: "Campaign not found" });
+          }
+      
+          res.send(result);
+        } catch (error) {
+          console.error("Error updating campaign:", error);
+          res.status(500).send({ error: "Failed to update campaign" });
+        }
+      });
+      
 
     // Delete campaign
     app.delete("/campaign/:id", async (req, res) => {
