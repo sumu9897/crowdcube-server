@@ -24,7 +24,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const db = client.db("crowdcubedb");
     const campaignCollection = db.collection("campaign");
@@ -199,7 +199,7 @@ async function run() {
     });
 
     // ----------- Health Check -----------
-    await client.db("admin").command({ ping: 1 });
+    //await client.db("admin").command({ ping: 1 });
     console.log("Connected to MongoDB!");
   } catch (error) {
     console.error("Error in MongoDB connection or setup:", error);
@@ -216,6 +216,6 @@ app.listen(port, () => {
 // Graceful shutdown
 process.on("SIGINT", async () => {
   console.log("Shutting down server...");
-  await client.close();
+  //await client.close();
   process.exit(0);
 });
